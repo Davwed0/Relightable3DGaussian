@@ -59,6 +59,14 @@ if __name__ == '__main__':
     cas_depth_num = [int(v) for v in args.cas_depth_num.split(',')]
     cas_interv_scale = [float(v) for v in args.cas_interv_scale.split(',')]
 
+    resize_width = (resize_width // 32) * 32
+    resize_height = (resize_height // 32) * 32
+    crop_width = (crop_width // 32) * 32
+    crop_height = (crop_height // 32) * 32
+
+    print(f"Using dimensions: resize=({resize_width},{resize_height}), crop=({crop_width},{crop_height})")
+
+
     Model = importlib.import_module(f'core.{args.model_name}').Model
     Loss = importlib.import_module(f'core.{args.model_name}').Loss
     get_val_loader = importlib.import_module(f'data.{args.dataset_name}').get_val_loader

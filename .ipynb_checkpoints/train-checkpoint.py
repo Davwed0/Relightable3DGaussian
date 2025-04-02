@@ -49,24 +49,25 @@ def training(dataset: ModelParams, opt: OptimizationParams, pipe: PipelineParams
     """
     Setup Gaussians
     """
-    src_path = os.path.join(dataset.model_path, "point_cloud",
-                                    f"iteration_{start_iter}")
-    ply_path = os.path.join(src_path, "point_cloud.ply")
-    mask_path = os.path.join(src_path, "mask.pt")
-
     if start_iter is not None:
         print(f"Loading from iteration {args.start_iter}...")
+        # Create a temporary model to load the PLY
         temp_model = GaussianModel(dataset.sh_degree, render_type=args.type)
+        # Load the ply file from the iteration
+        src_path = os.path.join(dataset.model_path, "point_cloud", 
+                               f"iteration_{start_iter}")
+        ply_path = os.path.join(src_path, "point_cloud.ply")
+        mask_path = os.path.join(src_path, "mask.pt")
         if os.path.exists(ply_path):
-            if os.path.exists(mask_path):
-                mask = torch.load(mask_path)
-                temp_model.load_ply(ply_path, mask, only_pbr=args.only_pbr)
-            else:
-                temp_model.load_ply(ply_path, only_pbr=args.only_pbr)
+            temp_model.load_ply(ply_path)
+            # Create the main model from the temp model
             gaussians = GaussianModel.create_from_gaussians([temp_model], dataset)
             scene = Scene(dataset, gaussians)
             first_iter = start_iter
             print(f"Successfully loaded model from iteration {start_iter}")
+            if os.path.exist(mask_path):
+                mask = torch.load(mask_path)
+                gaussians.prune_points(mask)
         else:
             print(f"Cannot find PLY file at {ply_path}, starting from scratch")
             gaussians = GaussianModel(dataset.sh_degree, render_type=args.type)
@@ -81,13 +82,12 @@ def training(dataset: ModelParams, opt: OptimizationParams, pipe: PipelineParams
             gaussians.load_ply(os.path.join(dataset.model_path,
                                          "point_cloud",
                                          "iteration_" + str(scene.loaded_iter),
-                                         "point_cloud.ply"), only_pbr=args.only_pbr)
+                                         "point_cloud.ply"))
         else:
             decimated_pcd = decimate_near_black_pointcloud(scene.scene_info.point_cloud)
             gaussians.create_from_pcd(decimated_pcd, scene.cameras_extent)
 
     gaussians.training_setup(opt)
-
 
     """
     Setup PBR components
@@ -439,7 +439,6 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint_interval", type=int, default=5000)
     parser.add_argument("-c", "--checkpoint", type=str, default=None)
     parser.add_argument("--start_iter", type=int, default=None, help="Start from specific iteration using saved PLY")
-    parser.add_argument("--only_pbr", type=bool, default=False, help="Freeze all vanilla Gaussian parameters?")
     args = parser.parse_args(sys.argv[1:])
     print(f"Current model path: {args.model_path}")
     print(f"Current rendering type:  {args.type}")

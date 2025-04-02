@@ -51,6 +51,7 @@ class Camera(nn.Module):
         if image_mask is not None:
             self.image_mask = image_mask
         else:
+            print(self.colmap_id)
             self.image_mask = torch.ones_like(self.depth)
 
         self.zfar = 100.0

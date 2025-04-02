@@ -44,20 +44,20 @@ def load_img_rgb(path):
         img = exr_file.get()
         img[..., 0:3] = rgb_to_srgb(img[..., 0:3], clip=False)
     else:
-        img = imageio.imread(path)
+        img = imageio.v2.imread(path)
         img = img / 255
         # img[..., 0:3] = srgb_to_rgb(img[..., 0:3])
     return img
 
 def load_mask_bool(mask_file):
-    mask = imageio.imread(mask_file, mode='L')
+    mask = imageio.v2.imread(mask_file, mode='L')
     mask = mask.astype(np.float32)
     mask[mask > 0.5] = 1.0
 
     return mask
 
 def load_depth(tiff_file):
-    return imageio.imread(tiff_file, mode='L')
+    return imageio.v2.imread(tiff_file, mode='L')
 
 def save_render_orb(file_path_wo_ext, data):
     exr_file = file_path_wo_ext + ".exr"

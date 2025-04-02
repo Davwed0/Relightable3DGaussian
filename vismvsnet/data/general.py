@@ -28,7 +28,7 @@ class MyDataset(data.Dataset):
         ref_idx = i
         src_idxs = self.pair[ref_idx][:self.num_src]
 
-        ref, *srcs = [os.path.join(self.root, f'images/{self.names[idx]}.png') for idx in [ref_idx] + src_idxs]
+        ref, *srcs = [os.path.join(self.root, f'images/{self.names[idx]}.JPG') for idx in [ref_idx] + src_idxs]
         ref_cam, *srcs_cam = [os.path.join(self.root, f'cams/{self.names[idx]}_cam.txt') for idx in [ref_idx] + src_idxs]
         skip = 0
 
@@ -39,6 +39,7 @@ class MyDataset(data.Dataset):
 
 
 def read(filenames, max_d, interval_scale):
+    print(filenames)
     ref_name, ref_cam_name, srcs_name, srcs_cam_name, skip = [filenames[attr] for attr in ['ref', 'ref_cam', 'srcs', 'srcs_cam', 'skip']]
     ref, *srcs = [cv2.imread(fn) for fn in [ref_name] + srcs_name]
     ref_cam, *srcs_cam = [load_cam(fn, max_d, interval_scale) for fn in [ref_cam_name] + srcs_cam_name]
