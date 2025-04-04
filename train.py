@@ -52,15 +52,16 @@ def training(dataset: ModelParams, opt: OptimizationParams, pipe: PipelineParams
     src_path = os.path.join(dataset.model_path, "point_cloud",
                                     f"iteration_{start_iter}")
     ply_path = os.path.join(src_path, "point_cloud.ply")
-    mask_path = os.path.join(src_path, "mask.pt")
+    mask_path = os.path.join(args.source_path, "images", "mask.pt")
 
     if start_iter is not None:
         print(f"Loading from iteration {args.start_iter}...")
         temp_model = GaussianModel(dataset.sh_degree, render_type=args.type)
         if os.path.exists(ply_path):
-            if os.path.exists(mask_path):
+            if os.path.exists(mask_path) and not args.only_pbr:
                 mask = torch.load(mask_path)
                 temp_model.load_ply(ply_path, mask, only_pbr=args.only_pbr)
+                print(f"Loading mask from {mask_path}")
             else:
                 temp_model.load_ply(ply_path, only_pbr=args.only_pbr)
             gaussians = GaussianModel.create_from_gaussians([temp_model], dataset)

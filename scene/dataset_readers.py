@@ -111,7 +111,12 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, debug=False
         mask_path = os.path.join(os.path.dirname(images_folder), "masks", os.path.basename(extr.name))
         mask = 1.0 - load_mask_bool(mask_path) / 255
         image = image * mask[..., None]
-        
+
+        if image.mean() < 1e-3:
+            print(f"Skipping black image: {image_path}")
+            continue
+
+
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovX=Fovx, FovY=FovY, fx=focal_length_x, fy=focal_length_y, cx=ppx,
                               cy=ppy, image=image, image_path=image_path, image_name=image_name, width=width, height=height,
                               image_mask=mask)
@@ -120,6 +125,22 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, debug=False
         if debug and idx >= 5:
             break
     sys.stdout.write('\n')
+    output_file = os.path.join(os.path.dirname(images_folder), "camera_info.json")
+    print(f"Writing camera information to {output_file}")
+
+    serializable_cam_infos = []
+    for cam in cam_infos:
+        cam_dict = {
+            "image_path": cam.image_path,
+            "image_name": cam.image_name,
+            "image": float(np.mean(cam.image)),
+            "mask": float(np.mean(cam.image_mask)),
+        }
+        serializable_cam_infos.append(cam_dict)
+
+    with open(output_file, "w") as f:
+        json.dump(serializable_cam_infos, f, indent=2)
+
     return cam_infos
 
 
